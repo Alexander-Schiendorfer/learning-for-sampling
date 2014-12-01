@@ -1,0 +1,218 @@
+\documentclass[conference]{IEEEtran}
+
+\ifCLASSINFOpdf
+\else
+\fi
+
+\usepackage[T1]{fontenc}
+\usepackage[utf8]{inputenc}
+\usepackage{graphicx}
+\usepackage{amsmath}
+\usepackage{amssymb}
+\usepackage{color}
+\usepackage{bm}
+\usepackage{listings}
+\usepackage{tikz}
+\usetikzlibrary{shapes,snakes}
+\usepackage{multirow}
+\usepackage{rotating}
+\usepackage{soul}
+\usepackage{url}
+\usepackage{pgf}
+\usepackage{tabularx}
+\usepackage{todonotes}
+\usepackage{flushend}
+
+%% TikZ
+\usepackage{tikz}
+\usetikzlibrary{arrows}
+\usetikzlibrary{calc}
+\usetikzlibrary{trees}
+\usepackage{booktabs}
+
+% custom definitions
+\definecolor{highlightblue}{rgb}{0.1,1.0,1.0}
+\definecolor{highlightgreen}{rgb}{0.5,1.0,0.0}
+\definecolor{highlightyellow}{rgb}{1.0,1.0,0.1}
+
+% custom commands
+\newcommand{\todot}[1]{\sethlcolor{highlightyellow} \hl{\textbf{TODO:} #1}}
+\newcommand{\note}[1]{\sethlcolor{highlightblue} \hl{\textbf{NOTE:} #1}}
+\newcommand{\noteg}[1]{\sethlcolor{highlightgreen} \hl{\textbf{NOTE:} #1}}
+\newcommand{\eval}[1]{\sethlcolor{red} \hl{\textbf{EVAL:} #1}}
+\newcommand{\impl}[1]{\sethlcolor{orange} \hl{\textbf{EVAL:} #1}}
+
+\newcommand{\setof}[1]{\ensuremath{\{#1\}}}
+\newcommand{\tupleOf}[1]{\ensuremath{\langle#1\rangle}}
+\newcommand{\twopartdef}[4]
+{ \left\{
+\begin{array}{ll}
+#1 \mbox{if } #2 \\
+#3 \mbox{if } #4
+\end{array}
+\right.
+}
+
+% abbreviations
+\newcommand{\PMS}{\text{PMS}}
+\newcommand{\PMSs}{\text{PMSs}}
+\newcommand{\TBS}{\text{TBS}}
+\newcommand{\TBSs}{\text{TBSs}}
+\newcommand{\TBST}{\text{TBST}}
+\newcommand{\TBSTs}{\text{TBSTs}}
+
+% AVPP Structure
+\newcommand{\SupAvpp}{\AnAvpp_{\textit{sup}}}
+\newcommand{\SubAvpp}{\AnAvpp_{\textit{sub}}}
+
+% TBST
+\newcommand{\RlTree}{T}
+\newcommand{\IndRlTree}[1]{\ResidualLoadPrediction{\RlTree}^{#1}}
+\newcommand{\IndAssRlTree}[1]{\ResidualLoadSym_{\RlTree}^{#1}}
+\newcommand{\IndAssRlTreeNode}[2]{\ResidualLoadSym^{#1}_{#2}}
+
+\newcommand{\IndProcRlTree}[1]{\IndAssRlTree{#1}}
+\newcommand{\Root}{r}
+\newcommand{\NodeSet}{\mathcal{N}}
+\newcommand{\DevRlTree}{\Delta T}
+\newcommand{\IndDevRlTree}[1]{\Delta\IndAssRlTree{#1}}
+\newcommand{\father}[1]{f(#1)}
+\newcommand{\NodeToTime}[1]{\tau(#1)}
+\newcommand{\prob}[1]{p(#1)}
+\newcommand{\TimeToNodes}[2]{\eta(#1,#2)}
+
+% Plant model symbols 
+\newcommand{\Production}{S}
+\newcommand{\DemandSym}{\mathcal{D}}
+
+\newcommand{\ScheduleSym}{S}
+\newcommand{\Schedule}[2]{\ScheduleSym_{#1}^{#2}}
+\newcommand{\AnticipatedSchedule}[2]{\overline{\ScheduleSym}^{#2}_{#1}}
+\newcommand{\ResidualLoadSym}{\mathcal{R}}
+\newcommand{\ResidualLoad}[1]{\ResidualLoadSym_{#1}}
+\newcommand{\ResidualLoadPrediction}[1]{\widehat{\ResidualLoadSym}_{#1}}
+\newcommand{\IndResidualLoadPrediction}[2]{\ResidualLoadPrediction{#1}^{#2}}
+\newcommand{\AssResidualLoad}[1]{\ResidualLoadSym_{#1}}
+\newcommand{\IndAssResidualLoad}[2]{\AssResidualLoad{#1}^{#2}}
+
+\newcommand{\ActualResidualLoad}[1]{\ResidualLoadSym^{\textit{act}}_{#1}}
+
+\newcommand{\AnticipatedResidualLoad}[1]{\overline{\ResidualLoadSym}_{#1}}
+\newcommand{\IndAnticipatedResidualLoad}[2]{\AnticipatedResidualLoad{#1}^{#2}}
+\newcommand{\AnticipatedResidualLoadDeviation}[1]{\Delta \AnticipatedResidualLoad{#1}}
+\newcommand{\IndAnticipatedResidualLoadDeviation}[2]{\Delta \IndAnticipatedResidualLoad{#1}{#2}}
+
+\newcommand{\CostsObjective}{\Gamma}
+\newcommand{\ViolationObjective}{\Delta}
+\newcommand{\SimilarityObjective}{\Phi}
+
+\newcommand{\CostFunctionSym}{c}
+\newcommand{\CostFunction}[2]{\CostFunctionSym_{#1}(#2)}
+\newcommand{\ChangeSpeedSym}{v}
+
+\newcommand{\ChangeSpeedMin}[1]{\ChangeSpeedSym_{\mathrm{min}}^{#1}}
+\newcommand{\ChangeSpeedMax}[1]{\ChangeSpeedSym_{\mathrm{max}}^{#1}}
+
+\newcommand{\tnow}{t_{\mathrm{now}}}
+\newcommand{\tnext}{t_{\mathrm{next}}}
+\newcommand{\HorizonMax}{\mathcal{H}}
+\newcommand{\Time}{\mathcal{T}}
+\newcommand{\Horizon}{\mathcal{W}}
+\newcommand{\Demand}[1]{\DemandSym_{#1}}
+\newcommand{\PDeltaSym}{\Production_{\delta}}
+\newcommand{\PMax}{\Production_{\mathrm{max}}}
+\newcommand{\PMin}{\Production_{\mathrm{min}}}
+\newcommand{\PDelta}[1]{\PDeltaSym^{#1}}
+%\newcommand{\Agent}{\mathcal{A}}
+\newcommand{\DispatchablePowerPlant}{\mathcal{A}}
+\newcommand{\AvppSet}{\mathcal{AVPP}}
+\newcommand{\AnAvpp}{\lambda}
+\newcommand{\TlAvpp}{\Lambda}
+\newcommand{\AgentPower}[2]{\Production_{#1}^{#2}}
+%\newcommand{\StateSym}{\sigma}
+\newcommand{\IntervalSet}{\mathcal{I}}
+\newcommand{\StateTimeAgent}[2]{\Production_{#1}^{#2}}
+%\newcommand{\StateMin}[1]{\StateSym_{\mathrm{min}}^{#1}}
+%\newcommand{\StateMax}[1]{\StateSym_{\mathrm{max}}^{#1}}
+\newcommand{\CMax}{c_{\mathrm{max}}}
+\newcommand{\CMin}{c_{\mathrm{min}}}
+\newcommand{\Power}[2]{\Production_{\mathrm{#1}}^{#2}}
+\newcommand{\ListSym}{L}
+\newcommand{\ListProduction}[2]{\ListSym_{#1}^{#2}}
+\newcommand{\ConcatenateSym }{+}
+\newcommand{\Expectation}{\mathbb{E}}
+\renewcommand{\Downarrow}{{\downarrow}}
+
+% Evaluation
+\newcommand{\mac}{\mbox{ma}}
+\newcommand{\mes}{\mbox{me}}
+\newcommand{\macTBST}{\mbox{\mac-\TBST}}
+\newcommand{\mesTBST}{\mbox{\mes-\TBST}}
+\newcommand{\macTBS}{\mbox{\mac-1-\TBS}}
+\newcommand{\mesTBS}{\mbox{\mes-1-\TBS}}
+
+\newcommand{\NbOfRuns}{100}
+\newcommand{\NbOfPp}{523}
+\newcommand{\NbPhysDisPp}{173}
+\newcommand{\NbPhysIntPp}{350}
+\newcommand{\HorizonEvalParam}{4}
+\newcommand{\TbsAccuracyTlAvpp}{1.5\%}
+\newcommand{\TbsAccuracy}{10.0\%}
+\newcommand{\TbsSlidingWindow}{10}
+
+% References
+\newcommand{\sref}[1]{Sect.~\ref{#1}}
+\newcommand{\fref}[1]{Fig.~\ref{#1}}
+\newcommand{\aref}[1]{Alg.~\ref{#1}}
+\newcommand{\tref}[1]{Table~\ref{#1}}
+\newcommand{\eref}[1]{Eq.~\ref{#1}}
+\newcommand{\lref}[1]{Listing~\ref{#1}}
+
+\newcommand\blfootnote[1]{%
+  \begingroup
+  \renewcommand\thefootnote{}\footnote{#1}%
+  \addtocounter{footnote}{-1}%
+  \endgroup
+}
+
+
+\begin{document}
+%\title{Autonomous Scheduling in a Hierarchical System of\\Self-Organizing Autonomous Virtual Power Plants}
+\title{Improving Model Abstraction by Active Learning*}
+
+\author{
+\IEEEauthorblockN{Alexander Schiendorfer, Christoph Lassner, and Wolfgang Reif}
+\IEEEauthorblockA{
+Universität Augsburg, Germany\\
+E-Mail: \{alexander.schiendorfer, christoph.lassner, reif\}@informatik.uni-augsburg.de}
+}
+
+\maketitle
+
+%\todo[inline]{Schedule contains the assigned residual load. But the assigned residual load does not necessarily equal the residual load to distribute.}
+
+%\noteg{Suitable figures: 1) Activity diagram that shows schedule creation from the perspective of a single AVPP 2) TBST that shows deviation scenarios 3) TBST that shows residual load scenarios 4) Activity diagram where hierarchical schedule creation is shown in conjunction with TBST (macro level approach) 5) Activity diagram where hierarchical schedule creation is shown in conjunction with TBST (meso level approach)}
+
+\begin{abstract}
+A very first abstract
+\blfootnote{*This research is partly sponsored by the research unit \emph{OC-Trust} (FOR 1085) of the German Research Foundation.}
+\end{abstract}
+
+%\begin{IEEEkeywords}
+%\noteg{Keywords (not necessary)}
+%\end{IEEEkeywords}
+
+\section{Hierarchical Distributed Energy Management}
+
+\section{Issues with Model Abstraction}
+
+\section{Improving Sampling Point Selection}
+
+\section{Evaluation}
+%\section*{Acknowledgment}
+%This research is partly sponsored by the research unit \emph{OC-Trust} (FOR 1085) of the German Research Foundation.
+
+\bibliographystyle{IEEEtran}
+\bibliography{saos_bib}
+
+\end{document}
