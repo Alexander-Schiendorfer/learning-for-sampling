@@ -117,18 +117,19 @@ Future energy systems move from systems of relatively few centrally organized un
 providing most of the power demanded by consumers to many highly distributed units calling
 for manageable control mechanisms~\cite{Ramchurn2012}.
 To deal with the resulting complexity in scheduling and controlling power plants in the face of 
-uncertainties introduced by nature and technical deficiencies, hierarchical organizations 
-that form autonomously can be employed~\cite{Anders-TAAS-2015}.
-Figure~\ref{fig:avpp-hierarchical-system-structure} illustrates these so-called autonomous virtual power plants (AVPP)
-that are related to the concept of dynamic virtual power plants~\cite{niesse2014conjoint}. To achieve a reduction of complexity in the optimization 
+uncertainties introduced by nature and technical deficiencies, hierarchical organizations based on virtual power plants
+that form autonomously can be employed~\cite{Anders-TAAS-2015,niesse2014conjoint}.
+Inner nodes of the hierarchy are called  \emph{autonomous} virtual power plants (AVPP) and act as intermediaries on behalf of their subordinate
+agents. Prosumers are thus structured into systems of systems represented by AVPPs, which can themselves can be part of other AVPPs, as 
+shown in \fref{fig:hierarchical-decomposition}. To achieve a reduction of complexity in the optimization 
 problem to be solved by the overall system, techniques are borrowed from model abstraction~\cite{Frantz_Taxonomy}. 
 In particular, functional dependencies over a combinatorial input domain stemming from the
 aggregate of underlying agents are approximated by repeatedly sampling input-output pairs
-and substituting the actual function by piecewise linear functions~\cite{Schiendorfer2014}. 
+and substituting the actual functions by piecewise linear functions~\cite{Schiendorfer2014}. 
 
 In general, the problem to be solved constitutes a hierarchical resource allocation problem~\cite{VanZandt1995},
 where the resource to be allocated to a set of agents maps to their scheduled contributions in order
-to meet a predicted demand over a scheduling window consisting of finitely many time steps with a fixed resolution
+to meet a predicted demand over a scheduling window $\Horizon$ consisting of finitely many time steps with a fixed resolution
 of 15 minutes.
  Agents have to act proactively, i.e., create schedules since they
 are subject to inertia and cannot be assumed to react fast enough in case of rapidly increasing (or decreasing) demand.
@@ -153,15 +154,61 @@ functions are defined as:
 %
 		\begin{align*}
 		\label{eq:changeInContribution}
-		&\ChangeSpeedMin\AnAgent(x) = \operatorname{max}\left\{P_{\mathrm{min}}, x - \Delta P\right\}\\
-		&\ChangeSpeedMax\AnAgent(x) = \operatorname{min}\left\{P_{\mathrm{max}}, x + \Delta P\right\}
+		&\ChangeSpeedMin\AnAgent(x) \overset{\underset{\mathrm{def}}{}}{=} \operatorname{max}\left\{P_{\mathrm{min}}, x - \Delta P\right\}\\
+		&\ChangeSpeedMax\AnAgent(x) \overset{\underset{\mathrm{def}}{}}{=} \operatorname{min}\left\{P_{\mathrm{max}}, x + \Delta P\right\}
 		\end{align*}
 %
 But of course, these functions can model richer systems than that, e.g., consider a hot or cold start-up~\cite{SchiendorferSyn2014},
 have a dependency on the current contribution, or rates of change that map combinatorially to the underlying agents~\cite{Schiendorfer2014}. In addition to that,
 cost functions $\CostFunctionSynt{\AnAgent}$ return the minimal costs incurred for a certain
 contribution.
+\begin{figure*}
+\centering
+\begin{tikzpicture}[->,>=stealth',shorten >=1pt,auto,node distance=1.cm,
+  thick,main node/.style={circle,fill=black!15,draw,font=\sffamily}]
 
+  \node[main node, label=north:500] (1) {};
+  \node[main node, label=south:100] (4) [below of=1] {};  
+  \node[main node, label=south:60] (3) [left of=4] {};    
+  \node[main node, label=south:140] (2) [left of=3] {};  
+  \node[main node, label=south:160] (5) [right of=4] {};  
+  \node[main node, label=south:40] (6) [right of=5] {}; 
+
+ \node[main node, label=south:140] (7) [right of=6, xshift=1cm] {}; 
+ \node[main node, label=south:60] (8) [right of=7] {}; 
+ \node[main node, label=south:100] (9) [right of=8] {}; 
+ \node[main node, label=south:160] (10) [right of=9, xshift=.5cm] {}; 
+ \node[main node, label=south:40] (11) [right of=10] {}; 
+  
+ \node[main node, yshift=-0.3cm, double,label=west:300] (12) [above of=8] {};
+ \node[main node, xshift=.4cm, yshift=-0.3cm, double,label=east:200] (13) [above left = of 11] {};
+ \node[main node, xshift=-1.5cm, yshift=-0.7cm, double,label=north:500] (14) [above = of 13] {};
+ 
+  \path[every node/.style={font=\sffamily\tiny}]
+    (1) edge node [right] {} (2)
+   	    edge node [right] {} (3) 
+   	    edge node [right] {} (4)
+   	    edge node [right] {} (5)
+   	    edge node [right] {} (6)      
+    (14) edge node [right] {} (12)
+   	     edge node [right] {} (13) 
+   	(12) edge node [right] {} (7)
+   	     edge node [right] {} (8)
+   	     edge node [right] {} (9) 
+   	(13) edge node [right] {} (10)
+   	     edge node [right] {} (11)      ;
+\end{tikzpicture}
+\caption{Resource allocation problems can be solved using a hierarchical decomposition structure. Inner nodes representing intermediaries are
+marked by double circles.}
+\label{fig:hierarchical-decomposition}
+\end{figure*}
+
+We present the scheduling problem for some inner node---called intermediary $\AnAvpp$---since the problem is solved top-down, as shown in 
+\fref{fig:hierarchical-decomposition}.
+Each intermediary in turn redistributes its assigned fraction of the overall demand $\AssResidualLoad{t}{\AnAvpp}$ to 
+its subordinate agents $\Subsystem$ until all leaf agents, i.e., physical power plants, are assigned schedules. Note
+that the root node $\TlAvpp$ is assigned the actual total demand of the environment, i.e., $\AssResidualLoad{t}{\TlAvpp} = \DemandSym[t]$.
+%
 \begin{eqnarray}
 \label{eq:csop-scheduling-hierarchy} \textstyle
 		& \underset{\AgentPower{t}{\AnAgent}}{\operatorname{minimize}} & 
@@ -172,15 +219,16 @@ contribution.
 		& & \textstyle \text{and } 
 		\CostsObjective = \sum_{a \in \Subsystem,\ t \in \Horizon} \CostFunction\AnAgent{\AgentPower{t}{\AnAgent}} \nonumber
 \end{eqnarray}
-
-We propose to solve it using an approach based on self-organization:
+%
+We propose to solve this problem using two approaches based on self-organization:
 \begin{itemize}
 \item A so-called ``regio-central'' approach: agents transfer models to their local supervisor who, at meso-level,
 centrally optimizes the allocation~\cite{Schiendorfer2014, SchiendorferSyn2014}
 \item An auction-based decentralized approach~\cite{Anders-TAAS-2015}
 \end{itemize}
 
-
+In both cases, obtaining a good abstraction of an intermediary's behavior as a compact
+representation of the underlying set of subordinate agents is desirable.
 
 \begin{figure*}
         \centering
@@ -200,13 +248,13 @@ centrally optimizes the allocation~\cite{Schiendorfer2014, SchiendorferSyn2014}
         \end{subfigure}
 \end{figure*}
 
-\begin{figure*}
-		\centering
-		 \includegraphics[width=0.55\textwidth]{img/avpp-hierarchical-system-structure.pdf}
-			\caption{Hierarchical system structure of a future autonomous power management system: Prosumers are structured into systems of systems represented by AVPPs acting as intermediaries, thereby decreasing the complexity of control and scheduling. AVPPs can be part of other AVPPs.}
-			%and participate in the power market.}
-		\label{fig:avpp-hierarchical-system-structure}
-\end{figure*}
+%\begin{figure*}
+%		\centering
+%		 \includegraphics[width=0.55\textwidth]{img/avpp-hierarchical-system-structure.pdf}
+%			\caption{Hierarchical system structure of a future autonomous power management system: Prosumers are structured into systems of systems represented by AVPPs acting as intermediaries, thereby decreasing the complexity of control and scheduling. AVPPs can be part of other AVPPs.}
+%			%and participate in the power market.}
+%		\label{fig:avpp-hierarchical-system-structure}
+%\end{figure*}
 
 
 \section{Issues with Model Abstraction}
