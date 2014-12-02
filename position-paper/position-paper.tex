@@ -77,7 +77,7 @@
 
 \begin{document}
 %\title{Autonomous Scheduling in a Hierarchical System of\\Self-Organizing Autonomous Virtual Power Plants}
-\title{Improving Model Abstraction by Active Learning*}
+\title{Active Learning for Model Abstraction*}
 
 \author{
 \IEEEauthorblockN{Alexander Schiendorfer, Christoph Lassner, and Wolfgang Reif}
@@ -93,12 +93,14 @@ Organizational structures such as hierarchies provide an effective means to
 deal with the increasing complexity found in large-scale energy systems that 
 results from uncertainties in nature as well as computational efforts in scheduling. 
 Abstraction-based methods provide a way to calculate a simpler behavior model 
-to be used in optimization in lieu a combination of a set of behavior models.
+to be used in optimization in lieu of a combination of a set of behavior models.
 In particular, functional dependencies over the combinatorial domain 
 are approximated by repeatedly sampling input-output pairs
 and substituting the actual function by piecewise linear functions. However, if
-the selected input-output pairs are selected in a weakly informative way, the resulting abstracted
+the selected input-output pairs are weakly informative, the resulting abstracted
 optimization problem introduces severe errors in quality as well as bad runtime performance.
+This problem is reminiscent of the task of selecting the next most informative input for supervised learning
+algorithms in case labeled input is rare.
 We therefore propose to apply methods from active learning based on decision trees for regression
 to search for informative
 input candidates to sample and present preliminary results that motivate further research. 
@@ -112,20 +114,53 @@ input candidates to sample and present preliminary results that motivate further
 
 \section{Hierarchical Distributed Energy Management}
 Future energy systems move from systems of relatively few centrally organized units
-providing most of the power demanded by consumers to many highly distributed units.
+providing most of the power demanded by consumers to many highly distributed units calling
+for manageable control mechanisms~\cite{Ramchurn2012}.
 To deal with the resulting complexity in scheduling and controlling power plants in the face of 
 uncertainties introduced by nature and technical deficiencies, hierarchical organizations 
-that form autonomously can be employed. To achieve a reduction of complexity in the optimization 
-problem to be solved by the overall system, techniques are borrowed from abstraction. 
+that form autonomously can be employed~\cite{Anders-TAAS-2015}.
+Figure~\ref{fig:avpp-hierarchical-system-structure} illustrates these so-called autonomous virtual power plants (AVPP)
+that are related to the concept of dynamic virtual power plants~\cite{niesse2014conjoint}. To achieve a reduction of complexity in the optimization 
+problem to be solved by the overall system, techniques are borrowed from model abstraction~\cite{Frantz_Taxonomy}. 
 In particular, functional dependencies over a combinatorial input domain stemming from the
 aggregate of underlying agents are approximated by repeatedly sampling input-output pairs
-and substituting the actual function by piecewise linear functions. However, if
-the selected input-output pairs are selected in a weakly informative way, the resulting abstracted
-optimization problem introduces severe errors in quality as well as bad runtime performance.
-We therefore propose the use of methods from active learning to search for informative
-input candidates to sample and present preliminary results that motivate further research. 
+and substituting the actual function by piecewise linear functions~\cite{Schiendorfer2014}. 
 
-In general, the problem to be solved is a hierarchical resource allocation problem~\cite{VanZandt1995}.
+In general, the problem to be solved constitutes a hierarchical resource allocation problem~\cite{VanZandt1995},
+where the resource to be allocated to a set of agents maps to their scheduled contributions in order
+to meet a predicted demand over a scheduling window consisting of finitely many time steps with a fixed resolution
+of 15 minutes.
+ Agents have to act proactively, i.e., create schedules since they
+are subject to inertia and cannot be assumed to react fast enough in case of rapidly increasing (or decreasing) demand.
+We derive the minimal set of constraints from the physical requirements that 
+power plants impose (see \cite{SchiendorferSyn2014} for a discussion of the literature):
+\begin{itemize}
+\item a minimal and maximal power boundary
+\item discontinuity given the ability to be switched off
+\item functions limiting the possible change in production over a certain period of time.
+\end{itemize}
+The latter function
+might depend on the type of an agent as well as the current contribution. 
+From these physical constraints, we abstract minimal and maximal contributions
+and switching on and off to a sorted list of \emph{feasible intervals} $\ListProduction{t}\AnAgent$.
+A power plant $a$ that is capable of being switched off or run between some boundaries
+$P_{\mathrm{min}}$ and $P_{\mathrm{max}}$ would then for instance be represented by 
+$\ListProduction{t}\AnAgent = \langle [0,0], [P_{\mathrm{min}}, P_{\mathrm{max}}] \rangle$.
+To allow planning for inertia in $\AnAgent$, we introduce functions $\ChangeSpeedMin\AnAgent$ and
+$\ChangeSpeedMax\AnAgent$ that return the minimum and maximum contribution in a following time step
+given the current contribution. In the simplest case---we consider a constant maximal change $\Delta P$---these 
+functions are defined as:
+%
+		\begin{align*}
+		\label{eq:changeInContribution}
+		&\ChangeSpeedMin\AnAgent(x) = \operatorname{max}\left\{P_{\mathrm{min}}, x - \Delta P\right\}\\
+		&\ChangeSpeedMax\AnAgent(x) = \operatorname{min}\left\{P_{\mathrm{max}}, x + \Delta P\right\}
+		\end{align*}
+%
+But of course, these functions can model richer systems than that, e.g., consider a hot or cold start-up~\cite{SchiendorferSyn2014},
+have a dependency on the current contribution, or rates of change that map combinatorially to the underlying agents~\cite{Schiendorfer2014}. In addition to that,
+cost functions $\CostFunctionSynt{\AnAgent}$ return the minimal costs incurred for a certain
+contribution.
 
 \begin{eqnarray}
 \label{eq:csop-scheduling-hierarchy} \textstyle
@@ -145,15 +180,11 @@ centrally optimizes the allocation~\cite{Schiendorfer2014, SchiendorferSyn2014}
 \item An auction-based decentralized approach~\cite{Anders-TAAS-2015}
 \end{itemize}
 
-We align the minimal set of constraints along the physical requirements that 
-power plants impose: a minimal and maximal power boundary, discontinuity by 
-the ability to be switched off as well as a function limiting the possible
-change in production over a certain period of time. The latter function
-might depend on the type of an agent as well as the current contribution.
+
 
 \begin{figure*}
         \centering
-        \begin{subfigure}[b]{0.5\textwidth}
+        \begin{subfigure}[b]{0.4\textwidth}
         \centering
                 \includegraphics[width=\textwidth]{img/costs}
                 \caption{Accuracy affected by the number of sampling points selected.}
@@ -161,7 +192,7 @@ might depend on the type of an agent as well as the current contribution.
         \end{subfigure}%
         ~ \qquad%add desired spacing between images, e. g. ~, \quad, \qquad, \hfill etc.
           %(or a blank line to force the subfigure onto a new line)
-        \begin{subfigure}[b]{0.45\textwidth}
+        \begin{subfigure}[b]{0.4\textwidth}
         \centering
                 \includegraphics[width=\textwidth]{img/gaussProc}
                 \caption{A probabilistic regression model allows to quantify uncertainty at given points in the domain of a learned function.}
@@ -171,7 +202,7 @@ might depend on the type of an agent as well as the current contribution.
 
 \begin{figure*}
 		\centering
-		 \includegraphics[width=0.65\textwidth]{img/avpp-hierarchical-system-structure.pdf}
+		 \includegraphics[width=0.55\textwidth]{img/avpp-hierarchical-system-structure.pdf}
 			\caption{Hierarchical system structure of a future autonomous power management system: Prosumers are structured into systems of systems represented by AVPPs acting as intermediaries, thereby decreasing the complexity of control and scheduling. AVPPs can be part of other AVPPs.}
 			%and participate in the power market.}
 		\label{fig:avpp-hierarchical-system-structure}
@@ -179,6 +210,9 @@ might depend on the type of an agent as well as the current contribution.
 
 
 \section{Issues with Model Abstraction}
+However, if
+the selected input-output pairs are selected in a weakly informative way, the resulting abstracted
+optimization problem introduces severe errors in quality as well as bad runtime performance.
 
 \section{Improving Sampling Point Selection}
 
