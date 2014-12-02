@@ -53,112 +53,9 @@
 \right.
 }
 
-% abbreviations
-\newcommand{\PMS}{\text{PMS}}
-\newcommand{\PMSs}{\text{PMSs}}
-\newcommand{\TBS}{\text{TBS}}
-\newcommand{\TBSs}{\text{TBSs}}
-\newcommand{\TBST}{\text{TBST}}
-\newcommand{\TBSTs}{\text{TBSTs}}
+% custom notation of the optimization problem etc
+\input{notation}
 
-% AVPP Structure
-\newcommand{\SupAvpp}{\AnAvpp_{\textit{sup}}}
-\newcommand{\SubAvpp}{\AnAvpp_{\textit{sub}}}
-
-% TBST
-\newcommand{\RlTree}{T}
-\newcommand{\IndRlTree}[1]{\ResidualLoadPrediction{\RlTree}^{#1}}
-\newcommand{\IndAssRlTree}[1]{\ResidualLoadSym_{\RlTree}^{#1}}
-\newcommand{\IndAssRlTreeNode}[2]{\ResidualLoadSym^{#1}_{#2}}
-
-\newcommand{\IndProcRlTree}[1]{\IndAssRlTree{#1}}
-\newcommand{\Root}{r}
-\newcommand{\NodeSet}{\mathcal{N}}
-\newcommand{\DevRlTree}{\Delta T}
-\newcommand{\IndDevRlTree}[1]{\Delta\IndAssRlTree{#1}}
-\newcommand{\father}[1]{f(#1)}
-\newcommand{\NodeToTime}[1]{\tau(#1)}
-\newcommand{\prob}[1]{p(#1)}
-\newcommand{\TimeToNodes}[2]{\eta(#1,#2)}
-
-% Plant model symbols 
-\newcommand{\Production}{S}
-\newcommand{\DemandSym}{\mathcal{D}}
-
-\newcommand{\ScheduleSym}{S}
-\newcommand{\Schedule}[2]{\ScheduleSym_{#1}^{#2}}
-\newcommand{\AnticipatedSchedule}[2]{\overline{\ScheduleSym}^{#2}_{#1}}
-\newcommand{\ResidualLoadSym}{\mathcal{R}}
-\newcommand{\ResidualLoad}[1]{\ResidualLoadSym_{#1}}
-\newcommand{\ResidualLoadPrediction}[1]{\widehat{\ResidualLoadSym}_{#1}}
-\newcommand{\IndResidualLoadPrediction}[2]{\ResidualLoadPrediction{#1}^{#2}}
-\newcommand{\AssResidualLoad}[1]{\ResidualLoadSym_{#1}}
-\newcommand{\IndAssResidualLoad}[2]{\AssResidualLoad{#1}^{#2}}
-
-\newcommand{\ActualResidualLoad}[1]{\ResidualLoadSym^{\textit{act}}_{#1}}
-
-\newcommand{\AnticipatedResidualLoad}[1]{\overline{\ResidualLoadSym}_{#1}}
-\newcommand{\IndAnticipatedResidualLoad}[2]{\AnticipatedResidualLoad{#1}^{#2}}
-\newcommand{\AnticipatedResidualLoadDeviation}[1]{\Delta \AnticipatedResidualLoad{#1}}
-\newcommand{\IndAnticipatedResidualLoadDeviation}[2]{\Delta \IndAnticipatedResidualLoad{#1}{#2}}
-
-\newcommand{\CostsObjective}{\Gamma}
-\newcommand{\ViolationObjective}{\Delta}
-\newcommand{\SimilarityObjective}{\Phi}
-
-\newcommand{\CostFunctionSym}{c}
-\newcommand{\CostFunction}[2]{\CostFunctionSym_{#1}(#2)}
-\newcommand{\ChangeSpeedSym}{v}
-
-\newcommand{\ChangeSpeedMin}[1]{\ChangeSpeedSym_{\mathrm{min}}^{#1}}
-\newcommand{\ChangeSpeedMax}[1]{\ChangeSpeedSym_{\mathrm{max}}^{#1}}
-
-\newcommand{\tnow}{t_{\mathrm{now}}}
-\newcommand{\tnext}{t_{\mathrm{next}}}
-\newcommand{\HorizonMax}{\mathcal{H}}
-\newcommand{\Time}{\mathcal{T}}
-\newcommand{\Horizon}{\mathcal{W}}
-\newcommand{\Demand}[1]{\DemandSym_{#1}}
-\newcommand{\PDeltaSym}{\Production_{\delta}}
-\newcommand{\PMax}{\Production_{\mathrm{max}}}
-\newcommand{\PMin}{\Production_{\mathrm{min}}}
-\newcommand{\PDelta}[1]{\PDeltaSym^{#1}}
-%\newcommand{\Agent}{\mathcal{A}}
-\newcommand{\DispatchablePowerPlant}{\mathcal{A}}
-\newcommand{\AvppSet}{\mathcal{AVPP}}
-\newcommand{\AnAvpp}{\lambda}
-\newcommand{\TlAvpp}{\Lambda}
-\newcommand{\AgentPower}[2]{\Production_{#1}^{#2}}
-%\newcommand{\StateSym}{\sigma}
-\newcommand{\IntervalSet}{\mathcal{I}}
-\newcommand{\StateTimeAgent}[2]{\Production_{#1}^{#2}}
-%\newcommand{\StateMin}[1]{\StateSym_{\mathrm{min}}^{#1}}
-%\newcommand{\StateMax}[1]{\StateSym_{\mathrm{max}}^{#1}}
-\newcommand{\CMax}{c_{\mathrm{max}}}
-\newcommand{\CMin}{c_{\mathrm{min}}}
-\newcommand{\Power}[2]{\Production_{\mathrm{#1}}^{#2}}
-\newcommand{\ListSym}{L}
-\newcommand{\ListProduction}[2]{\ListSym_{#1}^{#2}}
-\newcommand{\ConcatenateSym }{+}
-\newcommand{\Expectation}{\mathbb{E}}
-\renewcommand{\Downarrow}{{\downarrow}}
-
-% Evaluation
-\newcommand{\mac}{\mbox{ma}}
-\newcommand{\mes}{\mbox{me}}
-\newcommand{\macTBST}{\mbox{\mac-\TBST}}
-\newcommand{\mesTBST}{\mbox{\mes-\TBST}}
-\newcommand{\macTBS}{\mbox{\mac-1-\TBS}}
-\newcommand{\mesTBS}{\mbox{\mes-1-\TBS}}
-
-\newcommand{\NbOfRuns}{100}
-\newcommand{\NbOfPp}{523}
-\newcommand{\NbPhysDisPp}{173}
-\newcommand{\NbPhysIntPp}{350}
-\newcommand{\HorizonEvalParam}{4}
-\newcommand{\TbsAccuracyTlAvpp}{1.5\%}
-\newcommand{\TbsAccuracy}{10.0\%}
-\newcommand{\TbsSlidingWindow}{10}
 
 % References
 \newcommand{\sref}[1]{Sect.~\ref{#1}}
@@ -176,6 +73,8 @@
 }
 
 
+\usepackage{subcaption}
+
 \begin{document}
 %\title{Autonomous Scheduling in a Hierarchical System of\\Self-Organizing Autonomous Virtual Power Plants}
 \title{Improving Model Abstraction by Active Learning*}
@@ -189,12 +88,21 @@ E-Mail: \{alexander.schiendorfer, christoph.lassner, reif\}@informatik.uni-augsb
 
 \maketitle
 
-%\todo[inline]{Schedule contains the assigned residual load. But the assigned residual load does not necessarily equal the residual load to distribute.}
-
-%\noteg{Suitable figures: 1) Activity diagram that shows schedule creation from the perspective of a single AVPP 2) TBST that shows deviation scenarios 3) TBST that shows residual load scenarios 4) Activity diagram where hierarchical schedule creation is shown in conjunction with TBST (macro level approach) 5) Activity diagram where hierarchical schedule creation is shown in conjunction with TBST (meso level approach)}
-
 \begin{abstract}
-A very first abstract
+Organizational structures such as hierarchies provide an effective means to
+deal with the increasing complexity found in large-scale energy systems that 
+results from uncertainties in nature as well as computational efforts in scheduling. 
+Abstraction-based methods provide a way to calculate a simpler behavior model 
+to be used in optimization in lieu a combination of a set of behavior models.
+In particular, functional dependencies over the combinatorial domain 
+are approximated by repeatedly sampling input-output pairs
+and substituting the actual function by piecewise linear functions. However, if
+the selected input-output pairs are selected in a weakly informative way, the resulting abstracted
+optimization problem introduces severe errors in quality as well as bad runtime performance.
+We therefore propose to apply methods from active learning based on decision trees for regression
+to search for informative
+input candidates to sample and present preliminary results that motivate further research. 
+
 \blfootnote{*This research is partly sponsored by the research unit \emph{OC-Trust} (FOR 1085) of the German Research Foundation.}
 \end{abstract}
 
@@ -203,16 +111,87 @@ A very first abstract
 %\end{IEEEkeywords}
 
 \section{Hierarchical Distributed Energy Management}
+Future energy systems move from systems of relatively few centrally organized units
+providing most of the power demanded by consumers to many highly distributed units.
+To deal with the resulting complexity in scheduling and controlling power plants in the face of 
+uncertainties introduced by nature and technical deficiencies, hierarchical organizations 
+that form autonomously can be employed. To achieve a reduction of complexity in the optimization 
+problem to be solved by the overall system, techniques are borrowed from abstraction. 
+In particular, functional dependencies over a combinatorial input domain stemming from the
+aggregate of underlying agents are approximated by repeatedly sampling input-output pairs
+and substituting the actual function by piecewise linear functions. However, if
+the selected input-output pairs are selected in a weakly informative way, the resulting abstracted
+optimization problem introduces severe errors in quality as well as bad runtime performance.
+We therefore propose the use of methods from active learning to search for informative
+input candidates to sample and present preliminary results that motivate further research. 
+
+In general, the problem to be solved is a hierarchical resource allocation problem~\cite{VanZandt1995}.
+
+\begin{eqnarray}
+\label{eq:csop-scheduling-hierarchy} \textstyle
+		& \underset{\AgentPower{t}{\AnAgent}}{\operatorname{minimize}} & 
+		\alpha_{\ViolationObjective} \cdot \ViolationObjective + \alpha_{\CostsObjective} \cdot \CostsObjective \\
+		& \operatorname{subject\ to} & \forall a \in \Subsystem, \forall t \in \Horizon : \exists [x , y] \in \ListProduction{t}\AnAgent : x \leq \AgentPower{t}{\AnAgent} \leq y\text{,} \nonumber \\
+		& & \ChangeSpeedMin\AnAgent \left(\AgentPower{t-1}\AnAgent\right) \leq \AgentPower{t}{\AnAgent} \leq \ChangeSpeedMax\AnAgent\left(\AgentPower{t-1}\AnAgent\right) \nonumber\\
+		& & \textstyle \text{with } \ViolationObjective = \sum_{t \in \Horizon} \left|\Production_\Subsystem[t] - \AssResidualLoad{t}{\AnAvpp} \right| \text{, } \nonumber \\
+		& & \textstyle \text{and } 
+		\CostsObjective = \sum_{a \in \Subsystem,\ t \in \Horizon} \CostFunction\AnAgent{\AgentPower{t}{\AnAgent}} \nonumber
+\end{eqnarray}
+
+We propose to solve it using an approach based on self-organization:
+\begin{itemize}
+\item A so-called ``regio-central'' approach: agents transfer models to their local supervisor who, at meso-level,
+centrally optimizes the allocation~\cite{Schiendorfer2014, SchiendorferSyn2014}
+\item An auction-based decentralized approach~\cite{Anders-TAAS-2015}
+\end{itemize}
+
+We align the minimal set of constraints along the physical requirements that 
+power plants impose: a minimal and maximal power boundary, discontinuity by 
+the ability to be switched off as well as a function limiting the possible
+change in production over a certain period of time. The latter function
+might depend on the type of an agent as well as the current contribution.
+
+\begin{figure*}
+        \centering
+        \begin{subfigure}[b]{0.5\textwidth}
+        \centering
+                \includegraphics[width=\textwidth]{img/costs}
+                \caption{Accuracy affected by the number of sampling points selected.}
+                \label{fig:sampling}
+        \end{subfigure}%
+        ~ \qquad%add desired spacing between images, e. g. ~, \quad, \qquad, \hfill etc.
+          %(or a blank line to force the subfigure onto a new line)
+        \begin{subfigure}[b]{0.45\textwidth}
+        \centering
+                \includegraphics[width=\textwidth]{img/gaussProc}
+                \caption{A probabilistic regression model allows to quantify uncertainty at given points in the domain of a learned function.}
+                \label{fig:mouse}
+        \end{subfigure}
+\end{figure*}
+
+\begin{figure*}
+		\centering
+		 \includegraphics[width=0.65\textwidth]{img/avpp-hierarchical-system-structure.pdf}
+			\caption{Hierarchical system structure of a future autonomous power management system: Prosumers are structured into systems of systems represented by AVPPs acting as intermediaries, thereby decreasing the complexity of control and scheduling. AVPPs can be part of other AVPPs.}
+			%and participate in the power market.}
+		\label{fig:avpp-hierarchical-system-structure}
+\end{figure*}
+
 
 \section{Issues with Model Abstraction}
 
 \section{Improving Sampling Point Selection}
 
 \section{Evaluation}
+We investigate the effects of selecting a particular set of 
+sampling points for one group that could have emerged as part
+of a self-organization process.
+
+
 %\section*{Acknowledgment}
 %This research is partly sponsored by the research unit \emph{OC-Trust} (FOR 1085) of the German Research Foundation.
 
 \bibliographystyle{IEEEtran}
-\bibliography{saos_bib}
+\bibliography{saos}
 
 \end{document}
