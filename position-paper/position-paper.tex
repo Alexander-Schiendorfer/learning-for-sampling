@@ -22,6 +22,8 @@
 \usepackage{tabularx}
 \usepackage{todonotes}
 \usepackage{flushend}
+\usepackage[noend]{algpseudocode}   % package for algorithms
+\usepackage{algorithm}
 
 %% TikZ
 \usepackage{tikz}
@@ -108,9 +110,10 @@ input candidates to sample and present preliminary results that motivate further
 \blfootnote{*This research is partly sponsored by the research unit \emph{OC-Trust} (FOR 1085) of the German Research Foundation.}
 \end{abstract}
 
-%\begin{IEEEkeywords}
+\begin{IEEEkeywords}
+Active Learning, Abstraction, Optimization, Holarchies, Hierarchical System, Decision Trees
 %\noteg{Keywords (not necessary)}
-%\end{IEEEkeywords}
+\end{IEEEkeywords}
 
 \section{Hierarchical Distributed Energy Management}
 Future energy systems move from systems of relatively few centrally organized units
@@ -257,12 +260,78 @@ representation of the underlying set of subordinate agents is desirable.
 %\end{figure*}
 
 
-\section{Issues with Model Abstraction}
+\section{Obtaining Abstracted Models}
+
+\subsection{Interval Calculations and Sampling Abstraction}
+
+\todo[inline]{This is just copied unpublished material from my thesis, I'll rewrite that.}
+In addition to existing abstraction mechanisms that yield constraints shrinking the search space of the production of a virtual agent, we are interested in functional relationships between variables or decision expressions in an SAM. In particular, the maximal production change from one time step to another given the current aggregated production is of interest to improve the accuracy of the AAM. Even though temporal abstraction excludes ranges after t steps, it does not offer any boundaries between two consecutive time steps. A schedule that switches from minimal to maximal production values within the limitations of $\ListSym_t^a$ would be valid according to temporal abstraction but inaccurate given the underlying physical systems' possible inertia. Similarly, a cost function could map the aggregated production to the minimally required cost for a different optimization objective. 
+
+Therefore, we acquire an abstract representation of these functional relationships by \emph{sampling}, i.e., solving several optimization problems and collecting output values. Concretely, these problems consist of the constraints in the SAM and introduce an additional constraint that fixes the input variable to some particular value and tries to minimize or maximize the output variable. For example, $\AgentPower{0}{v}$ (with  $\AgentPower{0}{v}$ still being the sum of all $\AgentPower{0}{a}$) is bound to be $400$ and the objective is to maximize $\AgentPower{1}{v}$.  Then, these input-output pairs can be represented by a suitable approximation method instead. As of now, we employ \emph{piecewise linear functions} that are readily supported by MIP or Constraint Solvers such as CPLEX and have been applied in model abstraction in simulation engineering~\cite{Frantz_Taxonomy}.
+%
+\begin{algorithm}
+\caption{Sampling Abstraction for change speeds}\label{alg:SamplingAbstraction}
+\begin{algorithmic}[1]
+\Require $(X, D, C)$ is the SAM of $v$
+\Ensure $\kappa$ are pairs of the positive change speed
+\State $\mathcal{I} \gets s$ sampling points $\in \ListSym^a$
+\Procedure{sampling-abstraction}{$v, s$}
+\ForAll{$\{i \in \mathcal{I}\}$}
+\State $C' \gets C \cup \{(\AgentPower{0}{v} = i)\}$
+\State $o \gets $ solve $\langle X, D, C'\rangle$ : $\text{minimize } \CostsObjective[1]$
+\State $\kappa \gets \kappa \cup \{(i,o)\}$
+\EndFor
+\State \textbf{return} $\mathsf{pwLinear}(\kappa)$ 
+\EndProcedure
+\end{algorithmic}
+\end{algorithm}
+%
+After finding the feasible production ranges of a VA by general abstraction, we can perform sampling abstraction by using a number of sampling points distributed across the production range and collect the respective outputs. Currently these sampling points are selected equidistantly across the full range. We sketch the approach in \aref{alg:SamplingAbstraction} for the positive production change speed. The ``sampled'' piecewise linear function can then be used for additional constraints in the AAM .
+\subsection{Modifying existing SCSOPs for sampling Input-Output pairs}
+Given that the agent models are already available in a constraint language as needed for the load distribution problem, the main idea in sampling consists of reusing these constraints and formulating new problems. Compared to the distribution model, no residual load or initial states are included in these ``sampling'' models. A special role is given to the decision variables for the agents' production at time step 0. Usually constraints link the current state to these variables, e.g. $\AgentPower{0}{a} = 10.0$. But in this case these constraints are dropped and an additional constraint only ensures that a suitable initial state is found which is bound to an aggregate value: $\sum_{a \in \Subsystem} \AgentPower{0}{a} = 500.0$. Then a suitable valuation for the productions at $0$ are sought by the solver and a target expression is maximized or minimized.
+
+\subsection{Piecewise Linear Functions for Sampled Functions}
+
+\begin{figure*}
+        \centering
+        \begin{subfigure}[b]{0.4\textwidth}
+      \centering
+      	\includegraphics[width=\textwidth]{img/piecewiselin.pdf}
+      	\caption{Example function $f(x) = x^2 + 3 x \sin(x)$ sampled at $\{0, 1.5, 3.0, 4.5\}$.  }
+      	\label{fig:pwlFunction}
+        \end{subfigure}%
+        ~ \qquad%add desired spacing between images, e. g. ~, \quad, \qquad, \hfill etc.
+          %(or a blank line to force the subfigure onto a new line)
+        \begin{subfigure}[b]{0.4\textwidth}
+        \centering
+        \includegraphics[width=\textwidth]{img/costs.pdf}
+        \caption{Cost function sampled at different accuracies }
+        \label{fig:costsFunction}
+        \end{subfigure}
+\end{figure*}
+
+\subsection{Sampling Change Functions for an Abstracted Agent Model}
+The following graphs illustrate what piecewise linear approximations of functions of decision expressions in synthesized regional models look like for the AVPP example presented in \sref{sec:runningExample}. We revisit the virtual agent $w$ consisting of three concrete agents:
+%
+\begin{description}
+\item[a:] $\ListSym^a = \langle [0,0], [50, 100] \rangle$, $\gamma^a = 13$
+\item[b:] $\ListSym^b = \langle [0,0], [15, 35] \rangle$, $\gamma^b = 70$
+\item[c:] $\ListSym^c = \langle [0,0], [200, 400] \rangle$, $\gamma^c = 5$
+\end{description}
+where $\gamma$ is the price per production unit such that the total cost for one time step is given by $\sum_{a' \in \{a,b,c\}} \gamma^{a'} \AgentPower{t}{a'}$. General abstraction gave the feasible production space of this virtual agent in \sref{sec:generalAbstraction}: $\ListSym^v = \langle [0.0 0.0], [15.0 35.0], [50.0 135.0], [200.0 535.0] \rangle$. Different numbers of sampling points are selected equidistantly over the whole production space in addition to the boundary points of the intervals. Therefore, the more sampling points are used the higher the accuracy of the obtained piecewise linear function.
+
+
+The objective for the function in \fref{fig:costsFunction} was set to minimize the cost given a combined production. As in this example low production rates are set to be quite expensive, also the combined production of the virtual agent is more expensive at low rates.
+
+\subsection{Issues with Sampling Abstraction}
 However, if
 the selected input-output pairs are selected in a weakly informative way, the resulting abstracted
 optimization problem introduces severe errors in quality as well as bad runtime performance.
 
-\section{Improving Sampling Point Selection}
+
+\section{Improving Sampling Point Selection by Active Learning}
+\todo[inline]{Just some very preliminary pointers to literature}
+Active learning using Gaussian process has been applied to several problems~\cite{Krause2007,Krause2008,Park2011}. 
 
 \section{Evaluation}
 We investigate the effects of selecting a particular set of 
