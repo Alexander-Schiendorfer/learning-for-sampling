@@ -82,12 +82,12 @@
 \title{Active Learning for Model Abstraction*}
 
 \author{
-\IEEEauthorblockN{Alexander Schiendorfer\IEEEauthorrefmark{1}, Christoph Lassner\IEEEauthorrefmark{2}, Wolfgang Reif\IEEEauthorrefmark{1}, and Rainer Lienhart\IEEEauthorrefmark{2}}
+\IEEEauthorblockN{Alexander Schiendorfer\IEEEauthorrefmark{1}, Christoph Lassner\IEEEauthorrefmark{2}, Gerrit Anders\IEEEauthorrefmark{1}, Wolfgang Reif\IEEEauthorrefmark{1}, and Rainer Lienhart\IEEEauthorrefmark{2}}
 \IEEEauthorblockA{
 Institute for Software \& Systems Engineering\IEEEauthorrefmark{1}\\
 Multimedia Computing and Computer Vision Lab\IEEEauthorrefmark{2}\\
 University of Augsburg, Germany\\
-Email: \{alexander.schiendorfer, christoph.lassner, reif\}@informatik.uni-augsburg.de}
+Email: \{alexander.schiendorfer, christoph.lassner, anders, reif, lienhart\}@informatik.uni-augsburg.de}
 }
 
 \maketitle
@@ -140,11 +140,8 @@ of 15 minutes.
 are subject to inertia and cannot be assumed to react fast enough in case of rapidly increasing (or decreasing) demand.
 We derive the minimal set of constraints from the physical requirements that 
 power plants impose (see \cite{SchiendorferSyn2014} for a discussion of the literature):
-\begin{itemize}
-\item a minimal and maximal power boundary
-\item discontinuity given the ability to be switched off
-\item functions limiting the possible change in production over a certain period of time.
-\end{itemize}
+i) a minimal and maximal power boundary, ii) discontinuity given the ability to be switched off, and 
+iii) functions limiting the possible change in production over a certain period of time.
 The latter function
 might depend on the type of an agent as well as the current contribution. 
 From these physical constraints, we abstract minimal and maximal contributions
@@ -255,20 +252,21 @@ own superior may use to compute bids.
 
 \begin{figure*}
         \centering
-        \begin{subfigure}[b]{0.4\textwidth}
+        \begin{subfigure}[b]{\columnwidth}
         \centering
-                \includegraphics[width=\textwidth]{img/costs}
+                \includegraphics[width=\textwidth]{img/powerToCosts}
                 \caption{Accuracy affected by the number of sampling points selected.}
                 \label{fig:sampling}
         \end{subfigure}%
         ~ \qquad%add desired spacing between images, e. g. ~, \quad, \qquad, \hfill etc.
           %(or a blank line to force the subfigure onto a new line)
-        \begin{subfigure}[b]{0.4\textwidth}
+        \begin{subfigure}[b]{\columnwidth}
         \centering
-                \includegraphics[width=\textwidth]{img/gaussProc}
+                %\includegraphics[width=\textwidth]{img/gaussProc}
                 \caption{A probabilistic regression model allows to quantify uncertainty at given points in the domain of a learned function.}
                 \label{fig:mouse}
         \end{subfigure}
+        \caption{Selecting the ``right sampling points'' is crucial for good accuracy.}
 \end{figure*}
 
 %\begin{figure*}
@@ -302,9 +300,10 @@ $x$?'' or ``What is the maximally possible next contribution given the momentary
 involve solving an optimization problem since there can naturally be many configurations
 of subordinate agents leading to a contribution of $x$ with different costs. To address these issues,
 we acquire an abstract representation of functional relationships by \emph{sampling}, i.e., solving 
-several optimization problems and collecting input and output values (e.g., contribution-cost pairs).
+several optimization problems and collecting input and output values (e.g., contribution-cost pairs). 
 Underlying constraints $C$ and decision variables $(X, D)$ 
 of the sampling problems are kept identical of the optimization problem in \eref{eq:csop-scheduling-hierarchy}.
+Consequently, we can give the algorithm leading to the sampling points:
 %
 \begin{algorithm}
 \caption{Sampling Abstraction for cost function $\kappa_\AnAvpp$}\label{alg:SamplingAbstraction}
@@ -323,69 +322,44 @@ of the sampling problems are kept identical of the optimization problem in \eref
 \end{algorithmic}
 \end{algorithm}
 %
-\todo[inline]{This is just copied unpublished material from my thesis, I'll rewrite that.}
-
-Therefore, Concretely, these problems consist of the constraints in the SAM and introduce an additional constraint that fixes the input variable to some particular value and tries to minimize or maximize the output variable. For example, $\AgentPower{0}{v}$ (with  $\AgentPower{0}{v}$ still being the sum of all $\AgentPower{0}{a}$) is bound to be $400$ and the objective is to maximize $\AgentPower{1}{v}$.  Then, these input-output pairs can be represented by a suitable approximation method instead. As of now, we employ \emph{piecewise linear functions} that are readily supported by MIP or Constraint Solvers such as CPLEX and have been applied in model abstraction in simulation engineering~\cite{Frantz_Taxonomy}.
-%
-\begin{algorithm}
-\caption{Sampling Abstraction for change speeds}\label{alg:SamplingAbstraction}
-\begin{algorithmic}[1]
-\Require $(X, D, C)$ is the SAM of $v$
-\Ensure $\kappa$ are pairs of the positive change speed
-\State $\mathcal{I} \gets s$ sampling points $\in \ListSym^a$
-\Procedure{sampling-abstraction}{$v, s$}
-\ForAll{$\{i \in \mathcal{I}\}$}
-\State $C' \gets C \cup \{(\AgentPower{0}{v} = i)\}$
-\State $o \gets $ solve $\langle X, D, C'\rangle$ : $\text{minimize } \CostsObjective[1]$
-\State $\kappa \gets \kappa \cup \{(i,o)\}$
-\EndFor
-\State \textbf{return} $\mathsf{pwLinear}(\kappa)$ 
-\EndProcedure
-\end{algorithmic}
-\end{algorithm}
-%
-After finding the feasible production ranges of a VA by general abstraction, we can perform sampling abstraction by using a number of sampling points distributed across the production range and collect the respective outputs. Currently these sampling points are selected equidistantly across the full range. We sketch the approach in \aref{alg:SamplingAbstraction} for the positive production change speed. The ``sampled'' piecewise linear function can then be used for additional constraints in the AAM .
-\subsection{Modifying existing SCSOPs for sampling Input-Output pairs}
-Given that the agent models are already available in a constraint language as needed for the load distribution problem, the main idea in sampling consists of reusing these constraints and formulating new problems. Compared to the distribution model, no residual load or initial states are included in these ``sampling'' models. A special role is given to the decision variables for the agents' production at time step 0. Usually constraints link the current state to these variables, e.g. $\AgentPower{0}{a} = 10.0$. But in this case these constraints are dropped and an additional constraint only ensures that a suitable initial state is found which is bound to an aggregate value: $\sum_{a \in \Subsystem} \AgentPower{0}{a} = 500.0$. Then a suitable valuation for the productions at $0$ are sought by the solver and a target expression is maximized or minimized.
-
-\subsection{Piecewise Linear Functions for Sampled Functions}
-
-\begin{figure*}
-        \centering
-        \begin{subfigure}[b]{0.4\textwidth}
-      \centering
-      	\includegraphics[width=\textwidth]{img/piecewiselin.pdf}
-      	\caption{Example function $f(x) = x^2 + 3 x \sin(x)$ sampled at $\{0, 1.5, 3.0, 4.5\}$.  }
-      	\label{fig:pwlFunction}
-        \end{subfigure}%
-        ~ \qquad%add desired spacing between images, e. g. ~, \quad, \qquad, \hfill etc.
-          %(or a blank line to force the subfigure onto a new line)
-        \begin{subfigure}[b]{0.4\textwidth}
-        \centering
-        \includegraphics[width=\textwidth]{img/costs.pdf}
-        \caption{Cost function sampled at different accuracies }
-        \label{fig:costsFunction}
-        \end{subfigure}
-\end{figure*}
-
-\subsection{Sampling Change Functions for an Abstracted Agent Model}
-The following graphs illustrate what piecewise linear approximations of functions of decision expressions in synthesized regional models look like for the AVPP example presented in \sref{sec:runningExample}. We revisit the virtual agent $w$ consisting of three concrete agents:
-%
-\begin{description}
-\item[a:] $\ListSym^a = \langle [0,0], [50, 100] \rangle$, $\gamma^a = 13$
-\item[b:] $\ListSym^b = \langle [0,0], [15, 35] \rangle$, $\gamma^b = 70$
-\item[c:] $\ListSym^c = \langle [0,0], [200, 400] \rangle$, $\gamma^c = 5$
-\end{description}
-where $\gamma$ is the price per production unit such that the total cost for one time step is given by $\sum_{a' \in \{a,b,c\}} \gamma^{a'} \AgentPower{t}{a'}$. General abstraction gave the feasible production space of this virtual agent in \sref{sec:generalAbstraction}: $\ListSym^v = \langle [0.0 0.0], [15.0 35.0], [50.0 135.0], [200.0 535.0] \rangle$. Different numbers of sampling points are selected equidistantly over the whole production space in addition to the boundary points of the intervals. Therefore, the more sampling points are used the higher the accuracy of the obtained piecewise linear function.
-
-
-The objective for the function in \fref{fig:costsFunction} was set to minimize the cost given a combined production. As in this example low production rates are set to be quite expensive, also the combined production of the virtual agent is more expensive at low rates.
+%%
+%\begin{figure*}
+%        \centering
+%        \begin{subfigure}[b]{0.4\textwidth}
+%      \centering
+%      	\includegraphics[width=\textwidth]{img/piecewiselin.pdf}
+%      	\caption{Example function $f(x) = x^2 + 3 x \sin(x)$ sampled at $\{0, 1.5, 3.0, 4.5\}$.  }
+%      	\label{fig:pwlFunction}
+%        \end{subfigure}%
+%        ~ \qquad%add desired spacing between images, e. g. ~, \quad, \qquad, \hfill etc.
+%          %(or a blank line to force the subfigure onto a new line)
+%        \begin{subfigure}[b]{0.4\textwidth}
+%        \centering
+%        \includegraphics[width=\textwidth]{img/costs.pdf}
+%        \caption{Cost function sampled at different accuracies }
+%        \label{fig:costsFunction}
+%        \end{subfigure}
+%\end{figure*}
 
 \subsection{Issues with Sampling Abstraction}
-However, if
-the selected input-output pairs are selected in a weakly informative way, the resulting abstracted
-optimization problem introduces severe errors in quality as well as bad runtime performance.
+However, if the selected input-output pairs are selected in a weakly informative way, the resulting abstracted
+optimization problem introduces severe errors in quality as well as bad runtime performance. The former problem
+is understandable due to unfortunate interpolations, the latter problem is less obvious but stems from the way MIP-solvers
+resolve piecewise linear functions which might result in many integral decision variables that slow down the optimization.
+In addition, each sampling point comes at the expense of solving a modified optimization problem. Thus, it is desirable
+to avoid asking for uninformative points such as those ranging between $200$ and $400$ in \fref{fig:sampling}.
 
+We illustrate the issue with an example of an AVPP $\AnAvpp$ consisting of three agents $a$, $b$, and $c$:
+%
+\begin{description}
+\item[a:] $\ListSym^a = \langle [0,0], [50, 100] \rangle$, $\kappa^a = 13$
+\item[b:] $\ListSym^b = \langle [0,0], [15, 35] \rangle$, $\kappa^b = 70$
+\item[c:] $\ListSym^c = \langle [0,0], [200, 400] \rangle$, $\kappa^c = 5$
+\end{description}
+where $\kappa^i$ is the price per production unit such that the agents' cost functions are defined by: $\CostFunction{i}{x} = \kappa^i \cdot x$. We
+derive the feasible contribution ranges for $\AnAvpp$ and get $\ListSym^v = \langle [0, 0], [15, 35], [50, 135], [200, 535] \rangle$. 
+Sampling points are selected from this contribution range equidistantly and generally it holds that the more sampling points, the higher the accuracy, 
+as \fref{fig:sampling} shows. 
 
 \section{Improving Sampling Point Selection by Active Learning}
 \todo[inline]{Just some very preliminary pointers to literature}
