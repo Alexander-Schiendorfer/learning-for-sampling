@@ -218,22 +218,40 @@ that the root node $\TlAvpp$ is assigned the actual total demand of the environm
 \label{eq:csop-scheduling-hierarchy} \textstyle
 		& \underset{\AgentPower{t}{\AnAgent}}{\operatorname{minimize}} & 
 		\alpha_{\ViolationObjective} \cdot \ViolationObjective + \alpha_{\CostsObjective} \cdot \CostsObjective \\
-		& \operatorname{subject\ to} & \forall a \in \Subsystem, \forall t \in \Horizon : \exists [x , y] \in \ListProduction{t}\AnAgent : x \leq \AgentPower{t}{\AnAgent} \leq y\text{,} \nonumber \\
+		& \operatorname{subject\ to} & \forall a \in \Subsystem, \forall t \in \Horizon : \nonumber \\
+		& & \exists [x , y] \in \ListProduction{t}\AnAgent : x \leq \AgentPower{t}{\AnAgent} \leq y\text{,} \nonumber \\
 		& & \ChangeSpeedMin\AnAgent \left(\AgentPower{t-1}\AnAgent\right) \leq \AgentPower{t}{\AnAgent} \leq \ChangeSpeedMax\AnAgent\left(\AgentPower{t-1}\AnAgent\right) \nonumber\\
 		& & \textstyle \text{with } \ViolationObjective = \sum_{t \in \Horizon} \left|\Production_\Subsystem[t] - \AssResidualLoad{t}{\AnAvpp} \right| \text{, } \nonumber \\
 		& & \textstyle \text{and } 
-		\CostsObjective = \sum_{a \in \Subsystem,\ t \in \Horizon} \CostFunction\AnAgent{\AgentPower{t}{\AnAgent}} \nonumber
+		\CostsObjective = \sum_{t \in \Horizon} \CostsObjective[t] = \sum_{a \in \Subsystem} \CostFunction\AnAgent{\AgentPower{t}{\AnAgent}} \nonumber
 \end{eqnarray}
 %
-We propose to solve this problem using two approaches based on self-organization:
+We propose to solve this problem using two approaches based on self-organizing hierarchies
+for problem decomposition:
 \begin{itemize}
 \item A so-called ``regio-central'' approach: agents transfer models to their local supervisor who, at meso-level,
 centrally optimizes the allocation~\cite{Schiendorfer2014, SchiendorferSyn2014}
-\item An auction-based decentralized approach~\cite{Anders-TAAS-2015}
+\item An auction-based decentralized approach~\cite{Anders-TAAS-2015} where agents need not submit their model
+but only bid on a given demand based on their (private) individual capabilities.
 \end{itemize}
 
-In both cases, obtaining a good abstraction of an intermediary's behavior as a compact
-representation of the underlying set of subordinate agents is desirable.
+Obtaining a good abstraction of an intermediary's behavior as a compact
+representation of the underlying subordinate agents' combined behavior is desirable for both algorithms.
+In the regional-central case, one wants to simplify the resulting optimization problems, in particular
+by reducing the decision variables and constraints to be considered. In the auction-based algorithm, 
+an intermediary could, in principle, have all agents bid simultaneously to a single auctioneer, i.e., 
+use a super-flat hierarchy. Clearly, this auctioneer imposes a bottleneck with
+a rising number of agents. When installing a hierarchical organization for scalability, an intermediary
+ought to be aware of the physical boundaries of its subordinate agents \emph{before} submitting bids 
+in order to avoid inconsistencies that need to be (monetarily) punished by the organization~\cite{Anders-TAAS-2015}.
+As a simple illustration, consider that the fact that an intermediary better not bid for a contribution
+greater than 200 if it is comprised of two underlying physical agents with a maximal contribution of
+100 each. Even if the mere summation of maximal boundaries constitutes no computational effort, 
+the possible trajectories resulting from limited rates of change and disconnectability make 
+the problem harder. In fact, an intermediary needs to solve an optimization problem quite similar 
+to \eref{eq:csop-scheduling-hierarchy} in order to calculate bids for a given demand. Thus, 
+abstraction has to be applied to obtain a simplified model of the intermediary that its
+own superior may use to compute bids.
 
 \begin{figure*}
         \centering
@@ -263,13 +281,51 @@ representation of the underlying set of subordinate agents is desirable.
 
 
 \section{Obtaining Abstracted Models}
+As we have now established the need for effective abstraction
+techniques, we briefly revisit our existing approach to 
+discuss improvements using active learning.
 
 \subsection{Interval Calculations and Sampling Abstraction}
+A rather straightforward and first essential abstraction in this problem is 
+obtained by considering the possible contributions of an intermediary
+by combining their lists of feasible intervals. Assume agent $a_1$ can contribute
+in $[x_1, y_1]$ and agent 2 in $[x_2, y_2]$. Clearly, their combined contribution
+must be in $[x_1, y_1] \oplus [x_2, y_2] = [x_1 + x_2, y_1 + y_2]$. The operator $\oplus$
+naturally extends to lists of intervals by combining the intervals in a Cartesian fashion
+and merging the overlapping intervals. That way, one will find that the combined production
+of two agents $a_1$, $a_2$ with $\ListSym^{a_1} = \langle [0,0], [1,4] \rangle$ and
+$\ListSym^{a_2} = \langle [0,0], [7,10] \rangle$ will be either of $\langle [0,0], 
+[1,4], [7, 14] \rangle$.
 
+But now consider questions such as ``What is the minimal cost for an aggregate to contribute
+$x$?'' or ``What is the maximally possible next contribution given the momentary state is $y$''? Both 
+involve solving an optimization problem since there can naturally be many configurations
+of subordinate agents leading to a contribution of $x$ with different costs. To address these issues,
+we acquire an abstract representation of functional relationships by \emph{sampling}, i.e., solving 
+several optimization problems and collecting input and output values (e.g., contribution-cost pairs).
+Underlying constraints $C$ and decision variables $(X, D)$ 
+of the sampling problems are kept identical of the optimization problem in \eref{eq:csop-scheduling-hierarchy}.
+%
+\begin{algorithm}
+\caption{Sampling Abstraction for cost function $\kappa_\AnAvpp$}\label{alg:SamplingAbstraction}
+\begin{algorithmic}[1]
+\Require $(X, D, C)$ are the constraints for an intermediary $\AnAvpp$
+\Ensure $\gamma$ are contribution-cost pairs 
+\State $I \gets s$ sampling points $\in \ListSym^\AnAvpp$ \Comment{domain of $\kappa_\AnAvpp$}
+\Procedure{sampling-abstraction}{$\AnAvpp, I$}
+\ForAll{$\{i \in I\}$}
+\State $C' \gets C \cup \{(\AgentPower{0}{\AnAvpp} = i)\}$
+\State $o \gets $ solve $\langle X, D, C'\rangle$ : $\text{minimize } \CostsObjective[0]$
+\State $\gamma \gets \gamma \cup \{(i,o)\}$
+\EndFor
+\State \textbf{return} $\kappa_\AnAvpp \gets \mathsf{pwLinear}(\gamma)$ 
+\EndProcedure
+\end{algorithmic}
+\end{algorithm}
+%
 \todo[inline]{This is just copied unpublished material from my thesis, I'll rewrite that.}
-In addition to existing abstraction mechanisms that yield constraints shrinking the search space of the production of a virtual agent, we are interested in functional relationships between variables or decision expressions in an SAM. In particular, the maximal production change from one time step to another given the current aggregated production is of interest to improve the accuracy of the AAM. Even though temporal abstraction excludes ranges after t steps, it does not offer any boundaries between two consecutive time steps. A schedule that switches from minimal to maximal production values within the limitations of $\ListSym_t^a$ would be valid according to temporal abstraction but inaccurate given the underlying physical systems' possible inertia. Similarly, a cost function could map the aggregated production to the minimally required cost for a different optimization objective. 
 
-Therefore, we acquire an abstract representation of these functional relationships by \emph{sampling}, i.e., solving several optimization problems and collecting output values. Concretely, these problems consist of the constraints in the SAM and introduce an additional constraint that fixes the input variable to some particular value and tries to minimize or maximize the output variable. For example, $\AgentPower{0}{v}$ (with  $\AgentPower{0}{v}$ still being the sum of all $\AgentPower{0}{a}$) is bound to be $400$ and the objective is to maximize $\AgentPower{1}{v}$.  Then, these input-output pairs can be represented by a suitable approximation method instead. As of now, we employ \emph{piecewise linear functions} that are readily supported by MIP or Constraint Solvers such as CPLEX and have been applied in model abstraction in simulation engineering~\cite{Frantz_Taxonomy}.
+Therefore, Concretely, these problems consist of the constraints in the SAM and introduce an additional constraint that fixes the input variable to some particular value and tries to minimize or maximize the output variable. For example, $\AgentPower{0}{v}$ (with  $\AgentPower{0}{v}$ still being the sum of all $\AgentPower{0}{a}$) is bound to be $400$ and the objective is to maximize $\AgentPower{1}{v}$.  Then, these input-output pairs can be represented by a suitable approximation method instead. As of now, we employ \emph{piecewise linear functions} that are readily supported by MIP or Constraint Solvers such as CPLEX and have been applied in model abstraction in simulation engineering~\cite{Frantz_Taxonomy}.
 %
 \begin{algorithm}
 \caption{Sampling Abstraction for change speeds}\label{alg:SamplingAbstraction}
