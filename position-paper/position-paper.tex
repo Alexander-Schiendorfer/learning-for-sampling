@@ -96,13 +96,13 @@ Email: \{alexander.schiendorfer, christoph.lassner, anders, reif, lienhart\}@inf
 Organizational structures such as hierarchies provide an effective means to
 deal with the increasing complexity found in large-scale energy systems that 
 results from uncertainties in nature as well as computational efforts in scheduling. 
-Abstraction-based methods provide a way to calculate a simpler behavior model 
-to be used in optimization in lieu of a combination of a set of behavior models.
+In hierarchical systems, abstraction-based methods provide a way to calculate a simpler behavior model 
+to be used in optimization\note{, i.e., scheduling,} in lieu of a combination of a set of behavior models.
 In particular, functional dependencies over the combinatorial domain 
 are approximated by repeatedly sampling input-output pairs
 and substituting the actual function by piecewise linear functions. However, if
 the selected input-output pairs are weakly informative, the resulting abstracted
-optimization problem introduces severe errors in quality as well as bad runtime performance.
+optimization problem introduces severe errors in quality as well as bad runtime performance. \note{In other words, we want to approximate the functional dependencies as good as possible with a preferably low number of input-output pairs.}
 This problem is reminiscent of the task of selecting the next most informative input for supervised learning
 algorithms in case labeled input is rare.
 We therefore propose to apply methods from active learning based on decision trees for regression
@@ -124,30 +124,29 @@ for manageable control mechanisms~\cite{Ramchurn2012}.
 To deal with the resulting complexity in scheduling and controlling power plants in the face of 
 uncertainties introduced by nature and technical deficiencies, hierarchical organizations based on virtual power plants
 that form autonomously can be employed~\cite{Anders-TAAS-2015,niesse2014conjoint}.
-Inner nodes of the hierarchy are called  \emph{autonomous} virtual power plants (AVPP) and act as intermediaries on behalf of their subordinate
-agents. Prosumers are thus structured into systems of systems represented by AVPPs, which can themselves can be part of other AVPPs, as 
+In our vision of future energy management systems~\cite{Anders-TAAS-2015}, inner nodes of the hierarchy are called  \emph{autonomous} virtual power plants (AVPP) and act as intermediaries on behalf of their subordinate
+agents \todot{each prosumer and AVPP is modeled as an agent}. Prosumers \todot{define ``prosumer''} are thus structured into systems of systems represented by AVPPs, which can themselves be part of other AVPPs, as 
 shown in \fref{fig:hierarchical-decomposition}. To achieve a reduction of complexity in the optimization 
-problem to be solved by the overall system, techniques are borrowed from model abstraction~\cite{Frantz_Taxonomy}. 
+problem to be solved by the overall system when creating schedules for dispatchable power plants, techniques are borrowed from model abstraction~\cite{Frantz_Taxonomy}. 
 In particular, functional dependencies over a combinatorial input domain stemming from the
 aggregate of underlying agents are approximated by repeatedly sampling input-output pairs
 and substituting the actual functions by piecewise linear functions~\cite{Schiendorfer2014}. 
 
 In general, the problem to be solved constitutes a hierarchical resource allocation problem~\cite{VanZandt1995},
 where the resource to be allocated to a set of agents maps to their scheduled contributions in order
-to meet a predicted demand over a scheduling window $\Horizon$ consisting of finitely many time steps with a fixed resolution
-of 15 minutes.
- Agents have to act proactively, i.e., create schedules since they
+to meet a predicted demand over a scheduling window $\Horizon$ consisting of finitely many time steps with a fixed resolution of typically 15 minutes.
+ Agents have to act proactively, i.e., create schedules, since they
 are subject to inertia and cannot be assumed to react fast enough in case of rapidly increasing (or decreasing) demand.
 We derive the minimal set of constraints from the physical requirements that 
 power plants impose (see \cite{SchiendorferSyn2014} for a discussion of the literature):
 i) a minimal and maximal power boundary, ii) discontinuity given the ability to be switched off, and 
 iii) functions limiting the possible change in production over a certain period of time.
 The latter function
-might depend on the type of an agent as well as the current contribution. 
+might not only depend on the type of an agent but also on its current contribution. 
 From these physical constraints, we abstract minimal and maximal contributions
 and switching on and off to a sorted list of \emph{feasible intervals} $\ListProduction{t}\AnAgent$.
-A power plant $a$ that is capable of being switched off or run between some boundaries
-$P_{\mathrm{min}}$ and $P_{\mathrm{max}}$ would then for instance be represented by 
+A power plant $a$ that is capable of being switched off or running between some boundaries
+$P_{\mathrm{min}}$ and $P_{\mathrm{max}}$ would then, for instance, be represented by 
 $\ListProduction{t}\AnAgent = \langle [0,0], [P_{\mathrm{min}}, P_{\mathrm{max}}] \rangle$.
 To allow planning for inertia in $\AnAgent$, we introduce functions $\ChangeSpeedMin\AnAgent$ and
 $\ChangeSpeedMax\AnAgent$ that return the minimum and maximum contribution in a following time step
@@ -160,8 +159,8 @@ functions are defined as:
 		&\ChangeSpeedMax\AnAgent(x) \overset{\underset{\mathrm{def}}{}}{=} \operatorname{min}\left\{P_{\mathrm{max}}, x + \Delta P\right\}
 		\end{align*}
 %
-But of course, these functions can model richer systems than that, e.g., consider a hot or cold start-up~\cite{SchiendorferSyn2014},
-have a dependency on the current contribution, or rates of change that map combinatorially to the underlying agents~\cite{Schiendorfer2014}. In addition to that,
+But of course, these functions can model richer systems than that, e.g., consider a hot or cold start-up~\cite{SchiendorferSyn2014}, or
+depend on the current contribution as well as rates of change that map combinatorially to the underlying agents~\cite{Schiendorfer2014}. In addition to that,
 cost functions $\CostFunctionSynt{\AnAgent}$ return the minimal costs incurred for a certain
 contribution.
 \begin{figure*}
@@ -229,7 +228,7 @@ for problem decomposition:
 \item A so-called ``regio-central'' approach: agents transfer models to their local supervisor who, at meso-level,
 centrally optimizes the allocation~\cite{Schiendorfer2014, SchiendorferSyn2014}
 \item An auction-based decentralized approach~\cite{Anders-TAAS-2015} where agents need not submit their model
-but only bid on a given demand based on their (private) individual capabilities.
+but only bid on a given demand based on their (possibly private) individual capabilities.
 \end{itemize}
 
 Obtaining a good abstraction of an intermediary's behavior as a compact
@@ -238,7 +237,8 @@ In the regional-central case, one wants to simplify the resulting optimization p
 by reducing the decision variables and constraints to be considered. In the auction-based algorithm, 
 an intermediary could, in principle, have all agents bid simultaneously to a single auctioneer, i.e., 
 use a super-flat hierarchy. Clearly, this auctioneer imposes a bottleneck with
-a rising number of agents. When installing a hierarchical organization for scalability, an intermediary
+a rising number of agents. %as it has to decide which bids to accept and which to reject.
+When installing a hierarchical organization for scalability, an intermediary
 ought to be aware of the physical boundaries of its subordinate agents \emph{before} submitting bids 
 in order to avoid inconsistencies that need to be (monetarily) punished by the organization~\cite{Anders-TAAS-2015}.
 As a simple illustration, consider that the fact that an intermediary better not bid for a contribution
@@ -246,8 +246,8 @@ greater than 200 if it is comprised of two underlying physical agents with a max
 100 each. Even if the mere summation of maximal boundaries constitutes no computational effort, 
 the possible trajectories resulting from limited rates of change and disconnectability make 
 the problem harder. In fact, an intermediary needs to solve an optimization problem quite similar 
-to \eref{eq:csop-scheduling-hierarchy} in order to calculate bids for a given demand. Thus, 
-abstraction has to be applied to obtain a simplified model of the intermediary that its
+to \eref{eq:csop-scheduling-hierarchy} in order to calculate bids for a given demand.
+Similarly to the ``regio-central'' approach, abstraction has further to be applied to obtain a simplified model of the intermediary that its
 own superior may use to compute bids.
 
 \begin{figure*}
